@@ -1,0 +1,208 @@
+# def scan(request):
+#     global last_face
+#     sound = os.path.join(BASE_DIR, 'core', 'sound', 'beep.wav')
+    
+#     face_cascade_path = os.path.join(BASE_DIR, 'core', 'haarcascades', 'haarcascade_frontalface_default.xml')
+#     face_cascade = cv2.CascadeClassifier(face_cascade_path)
+    
+#     # Create the LBPHFaceRecognizer
+#     face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+    
+#     # Train the recognizer with profile images and labels
+#     profiles = Profile.objects.all()
+#     faces = []
+#     labels = []
+#     for profile in profiles:
+#         profile_image = cv2.imread(profile.image.path, cv2.IMREAD_GRAYSCALE)
+#         faces.append(profile_image)
+#         labels.append(profile.id)
+#     face_recognizer.train(faces, np.array(labels))
+    
+#     # Start capturing video from the webcam
+#     video_capture = cv2.VideoCapture(0)
+    
+#     recognized_employees = []
+    
+#     last_face = set()
+
+#     while True:
+#         ret, frame = video_capture.read()
+
+#         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+#         print("Number of detected faces:", len(faces))
+        
+#         for (x, y, w, h) in faces:
+#             face_roi = gray[y:y+h, x:x+w]
+#             face_id, confidence = face_recognizer.predict(face_roi)
+#             print('Detected face ROI:', face_roi)
+#             print("Predicted face ID:", face_id, "Confidence:", confidence)
+    
+#             if confidence < 100:
+#                 profile = Profile.objects.get(id=face_id)
+#                 face_name = f'{profile.first_name} {profile.last_name}'
+#                 recognized_employees.append({
+#                     'name': face_name,
+#                     'profession': profile.profession,
+#                     'ranking': profile.ranking,
+#                     'timestamp':timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+#                 })
+#                 print("Match found:", face_name)
+                
+#                 # Update the presence status of recognized faces
+#                 if not profile.present:
+#                     profile.present = True
+#                     profile.save()
+                
+#                 # Play a sound and update last recognized face
+#                 if last_face != face_name:
+#                     last_face = face_name
+#                     last_face_obj = LastFace(last_face=last_face)
+#                     last_face_obj.save()
+#                     winsound.PlaySound(sound, winsound.SND_ASYNC)
+
+#                 # Draw rectangle and text for recognized face
+#                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+#                 cv2.putText(frame, face_name, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+#                 #cv2.putText(frame, f"{face_name} - {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+#             else:
+#                 print("No match found.")
+                
+#         # Display the video frame
+#         cv2.imshow('Video', frame)
+
+#         # Break the loop if the Enter key is pressed
+#         if cv2.waitKey(1) & 0xFF == 13:
+#             video_capture.release()
+#             cv2.destroyAllWindows()
+#             print("Scanner closed")
+#             print("Recognized employees:", recognized_employees)
+#             return JsonResponse({'message': 'Scanner closed', 'recognized_employees': recognized_employees})
+
+# def scan(request):
+#      global last_face
+#      sound = os.path.join(BASE_DIR, 'core', 'sound', 'beep.wav')
+     
+#      detector = MTCNN()
+     
+#      face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+     
+#      profiles = Profile.objects.all()
+#      faces = []
+#      labels = []
+#      for profile in profiles:
+#          profile_image = cv2.imread(profile.image.path, cv2.IMREAD_GRAYSCALE)
+#          faces.append(profile_image)
+#          labels.append(profile.id)
+#      face_recognizer.train(faces, np.array(labels))
+#      video_capture = cv2.VideoCapture(0)
+
+#      recognized_employees = []
+
+#      last_face = ""
+     
+#      while True:
+#           ret,frame = video_capture.read()
+#           rgb_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+#           faces = detector.detect_faces(frame)
+          
+#           for face in faces:
+#             x, y, w, h = face['box']
+#             face_roi = rgb_frame[y:y+h, x:x+w]
+#             face_id, confidence = face_recognizer.predict(face_roi)
+#             print('Detected face ROI:', face_roi)
+#             print("Predicted face ID:", face_id, "Confidence:", confidence)
+            
+#             if confidence < 200:
+#                 profile = Profile.objects.get(id=face_id)
+#                 face_name = f'{profile.first_name} {profile.last_name}'
+#                 recognized_employees.append({
+#                     'name': face_name,
+#                     'profession': profile.profession,
+#                     'ranking': profile.ranking
+#                 })
+#                 profile.present = True
+#                 profile.updated = timezone.now()
+#                 profile.save()
+#                 if last_face != face_name:
+#                     last_face = face_name
+#                     last_face_obj = LastFace(last_face=last_face)
+#                     last_face_obj.save()
+#                     winsound.PlaySound(sound, winsound.SND_ASYNC)
+                    
+#                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+#                 cv2.putText(frame, face_name, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+#             else:
+#                 print("No match found.")   
+#           cv2.imshow('Video',frame)
+          
+#           if cv2.waitKey(1) & 0xFF == 13:
+#             video_capture.release()
+#             cv2.destroyAllWindows()
+#             print("Scanner closed")
+#             print("Recognized employees:", recognized_employees)
+#             return JsonResponse({'message': 'Scanner closed', 'recognized_employees': recognized_employees})
+def scan(request):
+    global last_face
+    sound = os.path.join(BASE_DIR, 'core', 'sound', 'beep.wav')
+    
+    profiles = Profile.objects.all()
+    known_face_encodings = []
+    known_face_names = []
+    for profile in profiles:
+        profile.present = False
+
+
+    for profile in profiles:
+        profile_image = face_recognition.load_image_file(profile.image.path)
+        profile_encoding = face_recognition.face_encodings(profile_image)[0]
+        known_face_encodings.append(profile_encoding)
+        known_face_names.append(profile.id)
+
+    video_capture = cv2.VideoCapture(0)
+    
+    recognized_employees = []
+    last_face = ""
+
+    while True:
+        ret, frame = video_capture.read()
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        face_locations = face_recognition.face_locations(rgb_frame)
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+
+        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.6)
+            face_name = "Unknown"
+
+            if True in matches:
+                first_match_index = matches.index(True)
+                face_id = known_face_names[first_match_index]
+                profile = Profile.objects.get(id=face_id)
+                face_name = f'{profile.first_name} {profile.last_name}'
+                recognized_employees.append({
+                    'name': face_name,
+                    'profession': profile.profession,
+                    'ranking': profile.ranking
+                })
+                profile.present = True
+                profile.updated = timezone.now()
+                profile.save()
+
+                if last_face != face_name:
+                    last_face = face_name
+                    last_face_obj = LastFace(last_face=last_face)
+                    last_face_obj.save()
+                    # You can add your sound playing logic here
+
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                cv2.putText(frame, face_name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+
+        cv2.imshow('Video', frame)
+
+        if cv2.waitKey(1) & 0xFF == 13:
+            video_capture.release()
+            cv2.destroyAllWindows()
+            print("Scanner closed")
+            print("Recognized employees:", recognized_employees)
+            return JsonResponse({'message': 'Scanner closed', 'recognized_employees': recognized_employees})
